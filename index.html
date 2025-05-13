@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAV四旋翼设计流程</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0071e3;
+            --secondary: #86b9ff;
+            --background: #ffffff;
+            --card-bg: #f5f5f7;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --border: #d2d2d7;
+            --success: #5bcd88;
+            --warning: #f7cf4a;
+            --danger: #ff3b30;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 80px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 60px;
+        }
+        
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #2d61fb, #3bacf0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        
+        .header p {
+            font-size: 24px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+        
+        .section {
+            margin-bottom: 80px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .section-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-right: 16px;
+        }
+        
+        .section-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-content {
+            padding-left: 64px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .table th {
+            background-color: #f2f2f7;
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .table tr:nth-child(even) {
+            background-color: #fbfbfd;
+        }
+        
+        .table tr:nth-child(odd) {
+            background-color: white;
+        }
+        
+        .table td {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .badge-primary {
+            background-color: rgba(0, 113, 227, 0.1);
+            color: var(--primary);
+        }
+        
+        .badge-success {
+            background-color: rgba(91, 205, 136, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-warning {
+            background-color: rgba(247, 207, 74, 0.1);
+            color: #d18616;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 24px 0;
+        }
+        
+        .grid-item {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .grid-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        .grid-item-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        
+        .grid-item-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .grid-item-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 32px 0;
+        }
+        
+        .flow-step {
+            width: 80%;
+            max-width: 400px;
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+        
+        .flow-step:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .flow-step-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .flow-step-icon i {
+            color: white;
+            font-size: 32px;
+        }
+        
+        .flow-step-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 0 20px;
+            }
+            
+            .header h1 {
+                font-size: 36px;
+            }
+            
+            .header p {
+                font-size: 18px;
+            }
+            
+            .section-number {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .section-title {
+                font-size: 24px;
+            }
+            
+            .section-content {
+                padding-left: 48px;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .flow-step {
+                width: 100%;
+            }
+        }
+        
+        h4 {
+            margin-top: 2rem !important;
+            margin-bottom: 1rem !important;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .section-content p {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .image-container {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background-color: #f9f9fb;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .image-caption {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .spacer {
+            height: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>UAV四旋翼设计流程</h1>
+            <p>从用户需求分析到产品发布的全流程设计AI介入点</p>
+        </header>
+        
+        <!-- 用户分析部分 -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2 class="section-title">用户分析</h2>
+            </div>
+            <div class="section-content">
+                <div class="card">
+                    <h3 class="card-title"><i class="fa fa-question-circle"></i>用户数据分析与介入点</h3>
+                    <p>人工智能可以在用户研究阶段提供多种形式的辅助与增强，主要包括以下几个介入点：</p>
+                    
+                    <!-- 图1：用户评论转换成设计语言 - 严格按照原图内容 -->
+                    <h4>用户评论转换成设计语言</h4>
+                    <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>用户画像</th>
+                                <th>核心需求（数据反推）</th>
+                                <th>设计语言转化范例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>新手玩家（占比 40%）</td>
+                                <td>易上手（关键词：新手、简单、轻松）<br>便携（携带、方便）<br>安全（担心、稳定）</td>
+                                <td>- 物理设计：轻量化（&lt;249g）、折叠式机身（对应"资深的""便携的"）<br>- 交互设计：一键起飞／降落、智能跟拍（降低操作门槛）<br>- 安全设计：自动避障、返航功能（解决"担心"痛点）</td>
+                            </tr>
+                            <tr>
+                                <td>摄影爱好者（占比 35%）</td>
+                                <td>高清拍摄（画面、清晰、4K）<br>稳定操控（稳定、抗风、防抖）<br>续航（时间、充电）</td>
+                                <td>- 硬件参数：4K HDR 镜头、机械防抖云台（对应"清晰的""稳定的"）<br>- 功能设计：智能构图、自动追踪拍摄对象（提升创作效率）<br>- 续航优化：模块化电池、快速充电（解决续航焦虑）</td>
+                            </tr>
+                            <tr>
+                                <td>户外／亲子用户（占比 25%）</td>
+                                <td>便携（携带、方便）<br>耐用（质量、做工、抗摔）<br>趣味性（乐趣、孩子、满意）</td>
+                                <td>- 形态设计：圆润机身（防碰撞）、轻量化材料（适合儿童携带）<br>- 交互设计：语音控制、手势操作（增强亲子互动）<br>- 附加功能：趣味航拍模式（如"轨迹飞行""360°环绕"）</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    
+                    <div class="spacer"></div>
+                    
+                    <!-- Prompt 优化部分 -->
+                    <h4>Prompt 自动建议与优化</h4>
+                    <div class="card" style="background-color: #f5f5f7; border: none; box-shadow: none;">
+                        <p><strong>基础版（用户输入）：</strong>"设计一款适合新手的无人机"</p>
+                        <p style="margin-top: 1rem;"><strong>AI 优化版（结合数据）：</strong>"设计一款轻于 249g、支持一键起降和智能避障的折叠式无人机，配备 30 分钟续航电池及 1080P 防抖摄像头，机身材质需抗摔耐用，操作界面需极简可视化（参考高频词：新手、简单、携带、稳定、续航）"</p>
+                        <p style="margin-top: 1rem;"><strong>技术参数强化版：</strong>"集成超声波避障系统（关联'避障''电机'强关联），遥控器内置 2.4 英寸显示屏（对应商品参数'液晶''遥控'），支持 GPS 自动返航（核心技术'返航''定位'）"</p>
+                    </div>
+                    
+                    <div class="spacer"></div>
+                    
+                    <!-- 图2：从用户关注点到功能卖点 - 严格按照原图内容 -->
+                    <h4>从用户关注点到功能卖点</h4>
+                    <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>用户核心需求</th>
+                                <th>设计语言（功能／参数）</th>
+                                <th>技术映射（文档数据支撑）</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>操作便捷性（简单、上手快）</td>
+                                <td>0 门槛操控（对应商品信息"0 门槛操控"）<br>可视化遥控界面</td>
+                                <td>高频词"操作简单""新手"; 参数"一键""自动"强关联"定位"</td>
+                            </tr>
+                            <tr>
+                                <td>拍摄质量（清晰、画面）</td>
+                                <td>4K 高清影像、HDR 视频录制<br>光学防抖镜头</td>
+                                <td>商品参数"4K 影像""高清""防抖"; 用户评论"画面清晰"</td>
+                            </tr>
+                            <tr>
+                                <td>续航与便携（时间、携带）</td>
+                                <td>25-30 分钟续航 + 快充技术<br>折叠轴距≤15cm</td>
+                                <td>高频词"续航""充电""携带"; 感性词"轻盈的""紧凑的"</td>
+                            </tr>
+                            <tr>
+                                <td>安全性（稳定、避障）</td>
+                                <td>激光避障 + GPS 双重定位<br>抗 6 级风力飞行</td>
+                                <td>核心技术"避障系统""返航功能"; 参数"抗风""定位"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 概念设计与脑暴 -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2 class="section-title">概念设计与脑暴</h2>
+            </div>
+            <div class="section-content">
+                <div class="card">
+                    <h3 class="card-title"><i class="fa fa-lightbulb"></i>AI辅助创意发散</h3>
+                    <p>利用AI图像生成技术进行无人机外观设计的创意发散，快速探索多种设计可能性：</p>
+                    
+                    <!-- 图3：优化排版，与其他图片保持一致的样式 -->
+                    <div class="image-container">
+                        <img src="image/3.png" alt="概念设计与脑暴">
+                        <div class="image-caption">
+                            <strong>图3：</strong>随机生图抽卡，确定主要方向，根据简单提示词进行发散更多可能性
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 概念筛选与优化 -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2 class="section-title">概念筛选与优化</h2>
+            </div>
+            <div class="section-content">
+                <div class="card">
+                    <h3 class="card-title"><i class="fa fa-sliders"></i>方案评估与优化</h3>
+                    <p>通过系统化的分析和对比，从多个方案中筛选出最优设计，并进行进一步优化：</p>
+                    
+                    <!-- 图4：保持与优化后的图3相同的排版样式 -->
+                    <div class="image-container">
+                        <img src="image/4.png" alt="概念筛选与对比工具">
+                        <div class="image-caption">
+                            <strong>图4：</strong>提供类似于思维导图的面板，方便用户进行对比，并且提供充足的context
+                        </div>
+                    </div>
+                    
+                    <!-- 图5：保持与优化后的图3相同的排版样式 -->
+                    <div class="image-container">
+                        <img src="image/5.png" alt="物理参数优化设计">
+                        <div class="image-caption">
+                            <strong>图5：</strong>优化设计介入物理参数，轴距、夹角、臂展比例、轴距
+                        </div>
+                    </div>
+                    
+                    <div class="spacer"></div>
+                    
+                    <h4 style="border-top: 1px solid var(--border); padding-top: 20px;">CMF设计探索(AI辅助)</h4>
+                    <div class="grid">
+                        <div class="grid-item">
+                            <div class="grid-item-icon">
+                                <i class="fa fa-palette"></i>
+                            </div>
+                            <h4 class="grid-item-title">色彩方案-AI辅助</h4>
+                            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                <div style="width: 40px; height: 40px; border-radius: 20px; background-color: #1c1c1e;"></div>
+                                <div style="width: 40px; height: 40px; border-radius: 20px; background-color: #0071e3;"></div>
+                                <div style="width: 40px; height: 40px; border-radius: 20px; background-color: #f2f2f7;"></div>
+                                <div style="width: 40px; height: 40px; border-radius: 20px; background-color: #fa5630;"></div>
+                            </div>
+                        </div>
+                        <div class="grid-item">
+                            <div class="grid-item-icon">
+                                <i class="fa fa-layer-group"></i>
+                            </div>
+                            <h4 class="grid-item-title">材质组合-Prompt</h4>
+                            <div style="margin-top: 12px;">
+                                <span class="badge badge-primary">碳纤维</span>
+                                <span class="badge badge-primary">哑光金属</span>
+                                <span class="badge badge-primary">航空级塑料</span>
+                            </div>
+                        </div>
+                        <div class="grid-item">
+                            <div class="grid-item-icon">
+                                <i class="fa fa-paint-brush"></i>
+                            </div>
+                            <h4 class="grid-item-title">表面处理-Prompt</h4>
+                            <div style="margin-top: 12px;">
+                                <span class="badge badge-primary">哑光涂层</span>
+                                <span class="badge badge-primary">轻微纹理</span>
+                                <span class="badge badge-primary">微透明边缘</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 设计到制造流程 -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2 class="section-title">设计到制造的流程</h2>
+            </div>
+            <div class="section-content">
+                <!-- 设计流程图 - 修复尺寸和排版 -->
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-cube"></i>
+                        </div>
+                        <h3 class="flow-step-title">3D建模</h3>
+                        <p>利用AI辅助转换2D概念草图为3D模型预览</p>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-check-circle"></i>
+                        </div>
+                        <h3 class="flow-step-title">测试评估</h3>
+                        <p>对设计方案进行虚拟和物理测试验证</p>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-print"></i>
+                        </div>
+                        <h3 class="flow-step-title">原型制作</h3>
+                        <p>3D打印和组装功能性原型</p>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-cog"></i>
+                        </div>
+                        <h3 class="flow-step-title">工程设计</h3>
+                        <p>完善工程细节与CMF设计</p>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-shipping-fast"></i>
+                        </div>
+                        <h3 class="flow-step-title">生产准备</h3>
+                        <p>设计优化以适应批量生产</p>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <div class="flow-step-icon">
+                            <i class="fa fa-rocket"></i>
+                        </div>
+                        <h3 class="flow-step-title">发布与迭代</h3>
+                        <p>产品发布和基于反馈的迭代优化</p>
+                    </div>
+                </div>
+                
+                <div class="spacer"></div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <p>UAV四旋翼设计流程指南 © 2025</p>
+            <p style="margin-top: 8px;">结合AI辅助的现代无人机设计方法</p>
+        </footer>
+    </div>
+</body>
+</html> 
